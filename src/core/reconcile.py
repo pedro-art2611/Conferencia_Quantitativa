@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import List, Dict, Tuple
-from .models import Carta
+from src.core.models import Carta
 
 def find_duplicates(cartas: List[Carta]) -> Dict[Tuple[str,str], List[Carta]]:
     groups: Dict[Tuple[str, str], List[Carta]] = defaultdict(list)
