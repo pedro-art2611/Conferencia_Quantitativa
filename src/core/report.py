@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Dict, List
+
 from docx import Document
+
 
 def generate_report(duplicates: Dict[str, List[str]], output_path: str) -> None:
     '''

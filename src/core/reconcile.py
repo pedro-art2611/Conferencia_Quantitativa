@@ -5,7 +5,6 @@ from core.models import Carta
 
 
 def find_duplicates(cartas: List[Carta]) -> Dict[Tuple[str, str], List[Carta]]:
-
     """
     Agrupa cartas por (setor, código) e retorna apenas os grupos com duplicatas
     """

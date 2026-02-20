@@ -4,7 +4,6 @@ from typing import Optional
 
 @dataclass(frozen=True)
 class Carta:
-
     """
     Representa uma carta no sistema
 
@@ -18,4 +17,4 @@ class Carta:
     codigo: str
     nome_arquivo: Optional[str] = None
     origem: Optional[str] = None  # "Pasta" ou "Planilha"
-    status: str = "Padrão" # "Padrão" ou "Fora do padrão"
+    status: str = "Padrão"  # "Padrão" ou "Fora do padrão"

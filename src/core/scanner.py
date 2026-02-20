@@ -1,13 +1,13 @@
 import os
-import typer
 from typing import List
 
-from core.parsing import parse_files
+import typer
+
 from core.models import Carta
+from core.parsing import parse_files
 
 
 def scan_folder(folder_path: str) -> List[Carta]:
-
     """
     - Escaneia a pasta selecionada e identifica duplicatas
     - Cada item (PDF ou pasta) é considerado uma 'carta'

@@ -1,16 +1,15 @@
 import typer
 
+from core.parsing import extract_identifiers
+from core.reconcile import find_duplicates
 from core.report import generate_report
 from core.scanner import scan_folder
-from core.reconcile import find_duplicates
-from core.parsing import extract_identifiers
 
 app = typer.Typer(help="Sistema para detectar duplicatas em arquivos de cartas e gerar relatórios.")
 
 
 @app.command()
 def scan(pasta: str):
-
     '''
     Função que escaneia a pasta selecionada e mostra
     quantas estão no padrão e fora do padrão
@@ -27,8 +26,8 @@ def scan(pasta: str):
 
     # Contagem de cartas no padrão e fora do padrão
     total = len(cartas)
-    padrao = sum(1 for c in cartas if c.status =="padrão")
-    fora_padrao = sum(1 for c in cartas if c.status =="fora do padrão")
+    padrao = sum(1 for c in cartas if c.status == "Dentro do padrão")
+    fora_padrao = sum(1 for c in cartas if c.status == "Fora do padrão")
 
     # Exibição dos resultados
     typer.echo(f"Total de cartas encontradas: ")
@@ -43,7 +42,6 @@ def scan(pasta: str):
 
 @app.command()
 def duplicates(folder: str):
-    
     """
     Função que exibe as duplicatas encontradas na pasta selecionada
     """
@@ -57,15 +55,15 @@ def duplicates(folder: str):
 
 @app.command()
 def report(folder: str, output: str = "relatorio.docx"):
-    
     '''
     Função que gera um relatório em docx, das cartas escaneadas e duplicadas pelo sistema
     '''
-    
+
     cartas = scan_folder(folder)
     duplicatas = find_duplicates(cartas)
     generate_report(duplicatas, output)
     typer.echo(f"Relatório salvo em: {output}")
+
 
 def main():
     app()
