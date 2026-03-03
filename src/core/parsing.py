@@ -6,10 +6,15 @@ from core.models import Carta
 
 
 def extract_identifiers(filepath: str) -> Carta | None:
+
     """
     Extrai o setor (duas letras maiúsculas) e o código (8 dígitos) do nome de um arquivo ou pasta
-    Retorna objetos de Carta com status de padrão ou fora do padrão
+    Retorna objetos de Carta com status:
+    - "Dentro do padrão" → segue o padrão oficial
+    - "Fora do Padrão" → tem sede/setor/código mas não segue o padrão completo
+    - "Não identificado" → não conseguimos extrair sede/setor/código
     """
+
     filename = os.path.basename(filepath)
     if filename.lower().endswith(".pdf"):
         filename = filename[:-4]
@@ -19,9 +24,10 @@ def extract_identifiers(filepath: str) -> Carta | None:
     sede = None
     setor = None
     codigo = None
+    gerencia = None
     assunto_parts = []
 
-    for i, token in enumerate(tokens):
+    for token in tokens:
         if token.isdigit() and len(token) == 8:
             codigo = token
         elif token.isalpha():
@@ -29,6 +35,8 @@ def extract_identifiers(filepath: str) -> Carta | None:
                 sede = token.upper()
             elif setor is None and 1 <= len(token) <= 3:
                 setor = token.upper()
+            elif gerencia is None:
+                gerencia = token.upper()
             else:
                 assunto_parts.append(token)
         else:
@@ -36,21 +44,23 @@ def extract_identifiers(filepath: str) -> Carta | None:
                 assunto_parts.append(token)
 
     if not (sede and setor and codigo):
-        return None
-        
-    assunto = "_".join(assunto_parts) if assunto_parts else None
+        return Carta(setor="", codigo="", nome_arquivo=filename, origem="Pasta", status="Não identificado")
 
-    # Padrão oficial: XX_XX_XXXXXXXX_assunto
-    oficial_pattern = f"{sede}_{setor}_{codigo}"
+    assunto = " ".join(assunto_parts) if assunto_parts else None
+
+    oficial_pattern = f"{sede}_{setor}_{codigo}_{gerencia}"
     if assunto:
         oficial_pattern += f"_{assunto}"
 
-    if len(setor) in (2, 3) and filename == oficial_pattern:
+    if filename == oficial_pattern:
         status = "Dentro do padrão"
+    elif filename.startswith(f"{sede}_{setor}_{codigo}_{gerencia}"):
+        # tem sede, setor, código e gerencia mas não bate 100% → fora do padrão
+        status = "Fora do padrão"
     else:
         status = "Fora do padrão"
 
-    return Carta(setor=setor, codigo=codigo, nome_arquivo=filepath, origem="Pasta", status=status)
+    return Carta(setor=setor, codigo=codigo, nome_arquivo=filename, origem="Pasta", status=status)
 
 
 
@@ -64,11 +74,5 @@ def parse_files(arquivos: List[str]) -> List[Carta]:
         identifier = extract_identifiers(nome)
         if not identifier:
             continue
-
-        setor = identifier.setor
-        codigo = identifier.codigo
-        if not setor or not codigo:
-            continue
-
-        cartas.append(Carta(setor=setor, codigo=codigo, nome_arquivo=nome, origem="pasta"))
+        cartas.append(identifier)
     return cartas
