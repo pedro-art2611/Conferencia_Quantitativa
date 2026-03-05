@@ -1,6 +1,5 @@
 import os
 from typing import List
-
 import typer
 
 from core.models import Carta
@@ -32,10 +31,5 @@ def scan_folder(folder_path: str) -> List[Carta]:
     # Usa parsing para transformar em objetos Carta
     nomes = [os.path.basename(p) for p in itens]
     cartas = parse_files(nomes)
-
-    # Reatribui caminho completo ao nome_arquivo
-    path_map = {os.path.basename(p): p for p in itens}
-    for c in cartas:
-        c.nome_arquivo = path_map.get(c.nome_arquivo, c.nome_arquivo)
 
     return cartas
