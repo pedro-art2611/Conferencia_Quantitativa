@@ -1,9 +1,26 @@
 import typer
 import os
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.columns import Columns
 from core.scanner import scan_folder
 from core.reconcile import find_duplicates
 
 app = typer.Typer()
+console = Console()
+
+def mostrar_tabela(cartas, titulo, cor_status, emoji):
+    table = Table(title=f"{emoji} {titulo}", header_style="bold magenta", style="bold blue")
+    table.add_column("Arquivo", style="cyan", no_wrap=True)
+    table.add_column("Setor", style="magenta")
+    table.add_column("Código", style="yellow")
+    table.add_column("Status", style="bold")
+
+    for c in cartas:
+        table.add_row(c.nome_arquivo, c.setor or "-", c.codigo or "-", f"[{cor_status}]{c.status}[/{cor_status}]")
+
+    console.print(table)
 
 @app.command()
 def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")):
@@ -23,7 +40,7 @@ def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")
 
     pasta_nome = os.path.basename(folder)
 
-    typer.echo(f"--- Relatório da pasta: {pasta_nome} ---\n")
+    console.print(f"Relatório da pasta: [bold cyan]{pasta_nome}")
 
     typer.echo("Cartas encontradas:")
     for c in cartas:
