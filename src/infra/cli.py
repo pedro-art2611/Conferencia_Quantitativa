@@ -1,73 +1,47 @@
 import typer
-
-from core.parsing import extract_identifiers
-from core.reconcile import find_duplicates
-from core.report import generate_report
+import os
 from core.scanner import scan_folder
+from core.reconcile import find_duplicates
 
-app = typer.Typer(help="Sistema para detectar duplicatas em arquivos de cartas e gerar relatórios.")
-
+app = typer.Typer()
 
 @app.command()
-def scan(pasta: str):
-    '''
-    Função que escaneia a pasta selecionada e mostra
-    quantas estão no padrão e fora do padrão
-    '''
+def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")):
+    """
+    Função que roda o sistema completo:
+    - Lista todas as cartas lidas
+    - Mostra um resumo (total, Dentro do padrão, Fora do padrão e Não identificado)
+    - Mostra as duplicatas identificadas
+    """
+    cartas = scan_folder(folder)
 
-    import os
-
-    cartas = []
-    for nome in os.listdir(pasta):
-        caminho = os.path.join(pasta, nome)
-        carta = extract_identifiers(caminho)
-        if carta:
-            cartas.append(carta)
-
-    # Contagem de cartas no padrão e fora do padrão
+    # resumo
     total = len(cartas)
     padrao = sum(1 for c in cartas if c.status == "Dentro do padrão")
-    fora_padrao = sum(1 for c in cartas if c.status == "Fora do padrão")
+    fora = sum(1 for c in cartas if c.status == "Fora do padrão")
+    nao_identificado = sum(1 for c in cartas if c.status == "Não identificado")
 
-    # Exibição dos resultados
-    typer.echo(f"Total de cartas encontradas: ")
+    pasta_nome = os.path.basename(folder)
+
+    typer.echo(f"--- Relatório da pasta: {pasta_nome} ---\n")
+
+    typer.echo("Cartas encontradas:")
     for c in cartas:
-        typer.echo(f"- {c.nome_arquivo}: {c.status}")
+        typer.echo(f"- {c.nome_arquivo} ({c.status})")
 
-    typer.echo(f"\nResumo:")
-    typer.echo(f"Total de cartas: {total}")
+    typer.echo("\nResumo: ")
+    typer.echo(f"Total de cartas encontradas: {total}")
     typer.echo(f"Cartas no padrão: {padrao}")
-    typer.echo(f"Cartas fora do padrão: {fora_padrao}")
+    typer.echo(f"Cartas fora do padrão: {fora}")
+    typer.echo(f"Cartas não identificadas: {nao_identificado}")
 
-
-@app.command()
-def duplicates(folder: str):
-    """
-    Função que exibe as duplicatas encontradas na pasta selecionada
-    """
-
-    cartas = scan_folder(folder)
-    duplicates = find_duplicates(cartas)
-    typer.echo(f"Duplicatas encontradas: {len(duplicates)}")
-    for (setor, codigo), grupo in duplicates.items():
-        typer.echo(f"- {setor} | {codigo}: {len(grupo)} cartas")
-
-
-@app.command()
-def report(folder: str, output: str = "relatorio.docx"):
-    '''
-    Função que gera um relatório em docx, das cartas escaneadas e duplicadas pelo sistema
-    '''
-
-    cartas = scan_folder(folder)
+    # duplicatas
     duplicatas = find_duplicates(cartas)
-    generate_report(duplicatas, output)
-    typer.echo(f"Relatório salvo em: {output}")
-
-
-def main():
-    app()
-
-
-if __name__ == "__main__":
-    main()
+    typer.echo("\nDuplicatas encontradas: ")
+    if not duplicatas:
+        typer.echo("Nenhuma duplicata encontrada!")
+    else:
+        for (setor, codigo), grupo in duplicatas.items():
+            typer.echo(f"- {setor} | {codigo}: {len(grupo)} cartas")
+            for carta in grupo:
+                typer.echo(f"   * {carta.nome_arquivo} ({carta.status})")
