@@ -6,7 +6,6 @@ from core.models import Carta
 
 
 def extract_identifiers(filepath: str) -> Carta | None:
-
     """
     Extrai o setor (duas letras maiúsculas) e o código (8 dígitos) do nome de um arquivo ou pasta
     Retorna objetos de Carta com status:
@@ -61,7 +60,6 @@ def extract_identifiers(filepath: str) -> Carta | None:
         status = "Fora do padrão"
 
     return Carta(setor=setor, codigo=codigo, nome_arquivo=filename, origem="Pasta", status=status)
-
 
 
 def parse_files(arquivos: List[str]) -> List[Carta]:

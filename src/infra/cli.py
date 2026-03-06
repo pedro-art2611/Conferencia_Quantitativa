@@ -1,14 +1,17 @@
-import typer
 import os
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
+
+import typer
 from rich.columns import Columns
-from core.scanner import scan_folder
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
 from core.reconcile import find_duplicates
+from core.scanner import scan_folder
 
 app = typer.Typer()
 console = Console()
+
 
 def mostrar_tabela(cartas, titulo, cor_status):
     table = Table(title=f"{titulo}", header_style="bold magenta", style="bold blue")
@@ -21,6 +24,7 @@ def mostrar_tabela(cartas, titulo, cor_status):
         table.add_row(c.nome_arquivo, c.setor or "-", c.codigo or "-", f"[{cor_status}]{c.status}[/{cor_status}]")
 
     console.print(table)
+
 
 @app.command()
 def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")):
@@ -40,7 +44,7 @@ def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")
 
     console.print(f"📂 Relatório da pasta: [bold cyan]{pasta_nome}")
 
-    #Mostrar as tabelas de forma separada
+    # Mostrar as tabelas de forma separada
 
     if padrao:
         mostrar_tabela(padrao, "Cartas dentro do padrão ✅", "green")
@@ -49,7 +53,7 @@ def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")
     if nao_identificado:
         mostrar_tabela(nao_identificado, "Cartas não identificadas ⚠️", "yellow")
 
-    #Duplicatas
+    # Duplicatas
 
     duplicatas = find_duplicates(cartas)
     if not duplicatas:
@@ -64,18 +68,17 @@ def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")
         for (setor, codigo), grupo in duplicatas.items():
             arquivos = "\n".join([c.nome_arquivo for c in grupo])
             dup_table.add_row(setor, codigo, str(len(grupo)), arquivos)
-    
+
         console.print(dup_table)
 
-    #Resumo geral
+    # Resumo geral
 
-    total = (len(cartas))
+    total = len(cartas)
 
     resumo = [
         Panel(f"Total: [bright_blue]{total}[/]", style="bright_blue"),
         Panel(f"Dentro do padrão: [green]{len(padrao)}[/]", style="green"),
         Panel(f"Fora do padrão: [red]{len(fora)}[/]", style="red"),
-        Panel(f"Não identificadas: [dark_goldenrod]{len(nao_identificado)}[/]", style="dark_goldenrod")
+        Panel(f"Não identificadas: [dark_goldenrod]{len(nao_identificado)}[/]", style="dark_goldenrod"),
     ]
     console.print(Columns(resumo))
-

@@ -26,7 +26,7 @@ def scan_folder(folder_path: str) -> List[Carta]:
             continue
 
         itens.append(item_path)
-        typer.echo(f"Selecionado: {item_path}")
+        #typer.echo(f"Selecionado: {item_path}")
 
     # Usa parsing para transformar em objetos Carta
     nomes = [os.path.basename(p) for p in itens]
