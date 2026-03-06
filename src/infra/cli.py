@@ -10,8 +10,8 @@ from core.reconcile import find_duplicates
 app = typer.Typer()
 console = Console()
 
-def mostrar_tabela(cartas, titulo, cor_status, emoji):
-    table = Table(title=f"{emoji} {titulo}", header_style="bold magenta", style="bold blue")
+def mostrar_tabela(cartas, titulo, cor_status):
+    table = Table(title=f"{titulo}", header_style="bold magenta", style="bold blue")
     table.add_column("Arquivo", style="cyan", no_wrap=True)
     table.add_column("Setor", style="magenta")
     table.add_column("Código", style="yellow")
@@ -32,33 +32,50 @@ def run(folder: str = typer.Argument(..., help="Caminho da pasta com as cartas")
     """
     cartas = scan_folder(folder)
 
-    # resumo
-    total = len(cartas)
-    padrao = sum(1 for c in cartas if c.status == "Dentro do padrão")
-    fora = sum(1 for c in cartas if c.status == "Fora do padrão")
-    nao_identificado = sum(1 for c in cartas if c.status == "Não identificado")
+    padrao = [c for c in cartas if c.status == "Dentro do padrão"]
+    fora = [c for c in cartas if c.status == "Fora do padrão"]
+    nao_identificado = [c for c in cartas if c.status == "Não identificado"]
 
     pasta_nome = os.path.basename(folder)
 
-    console.print(f"Relatório da pasta: [bold cyan]{pasta_nome}")
+    console.print(f"📂 Relatório da pasta: [bold cyan]{pasta_nome}")
 
-    typer.echo("Cartas encontradas:")
-    for c in cartas:
-        typer.echo(f"- {c.nome_arquivo} ({c.status})")
+    #Mostrar as tabelas de forma separada
 
-    typer.echo("\nResumo: ")
-    typer.echo(f"Total de cartas encontradas: {total}")
-    typer.echo(f"Cartas no padrão: {padrao}")
-    typer.echo(f"Cartas fora do padrão: {fora}")
-    typer.echo(f"Cartas não identificadas: {nao_identificado}")
+    if padrao:
+        mostrar_tabela(padrao, "Cartas dentro do padrão ✅", "green")
+    if fora:
+        mostrar_tabela(fora, "Cartas fora do padrão ❌", "red")
+    if nao_identificado:
+        mostrar_tabela(nao_identificado, "Cartas não identificadas ⚠️", "yellow")
 
-    # duplicatas
+    #Duplicatas
+
     duplicatas = find_duplicates(cartas)
-    typer.echo("\nDuplicatas encontradas: ")
     if not duplicatas:
-        typer.echo("Nenhuma duplicata encontrada!")
+        console.print(Panel(f"Nenhuma duplicata encontrada! 👏", style="bold cyan"))
     else:
+        dup_table = Table(title="Duplicatas encontradas ❗", style="bold red")
+        dup_table.add_column("Setor: ", style="magenta")
+        dup_table.add_column("Código: ", style="yellow")
+        dup_table.add_column("Quantidade: ", style="purple4")
+        dup_table.add_column("Arquivos: ", style="cyan")
+
         for (setor, codigo), grupo in duplicatas.items():
-            typer.echo(f"- {setor} | {codigo}: {len(grupo)} cartas")
-            for carta in grupo:
-                typer.echo(f"   * {carta.nome_arquivo} ({carta.status})")
+            arquivos = "\n".join([c.nome_arquivo for c in grupo])
+            dup_table.add_row(setor, codigo, str(len(grupo)), arquivos)
+    
+        console.print(dup_table)
+
+    #Resumo geral
+
+    total = (len(cartas))
+
+    resumo = [
+        Panel(f"Total: [bright_blue]{total}[/]", style="bright_blue"),
+        Panel(f"Dentro do padrão: [green]{len(padrao)}[/]", style="green"),
+        Panel(f"Fora do padrão: [red]{len(fora)}[/]", style="red"),
+        Panel(f"Não identificadas: [dark_goldenrod]{len(nao_identificado)}[/]", style="dark_goldenrod")
+    ]
+    console.print(Columns(resumo))
+
