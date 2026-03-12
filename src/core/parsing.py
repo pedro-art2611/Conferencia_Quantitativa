@@ -45,17 +45,18 @@ def extract_identifiers(filepath: str) -> Carta | None:
     if not (sede and setor and codigo):
         return Carta(setor="", codigo="", nome_arquivo=filename, origem="Pasta", status="Não identificado")
 
-    assunto = " ".join(assunto_parts) if assunto_parts else None
+    assunto = "_".join(assunto_parts) if assunto_parts else None
 
     oficial_pattern = f"{sede}_{setor}_{codigo}_{gerencia}"
+    
     if assunto:
         oficial_pattern += f"_{assunto}"
 
     if filename == oficial_pattern:
         status = "Dentro do padrão"
     elif filename.startswith(f"{sede}_{setor}_{codigo}_{gerencia}"):
-        # tem sede, setor, código e gerencia mas não bate 100% → fora do padrão
-        status = "Fora do padrão"
+        # começa com o padrão oficial, assunto pode ter continuação
+        status = "Dentro do padrão"
     else:
         status = "Fora do padrão"
 
